@@ -1,77 +1,338 @@
-<h1>Sync between MS Entra ID & on-premises Active Directory</h1>
-<br>
-<p>This tutorial outlines steps on how to sync between Microsoft Entra ID and On-Premises Active Directory.</p>
-<br>
+# Microsoft Entra Connect Sync: Hybrid Identity Integration
 
-<p>1. To begin sync between MS Entra ID and On-premises Active Directory, TLS1.2(Transport Layer Security)- a protocol that provides secure communication by encrypting data between clients and servers over a network to protect it from interception and tampering, needs to be enabled. To do this, first right-click start on your windows server and click on Windows Powershell and run this command to enable TLS 1.2 -
+**Microsoft Entra ID | Active Directory Domain Services | Password Hash Synchronization | PowerShell**
 
-  # TLS 1.2 Registry Key
-  # https://docs.microsoft.com/en-us/azure/active-directory/hybrid/reference-connect-tls-enforcement#powershell-script-to-enable-tls-12
+## Project Overview
 
-  New-Item 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' -Force | Out-Null
+I configured hybrid identity synchronization between an on-premises Active Directory Domain Services environment and Microsoft Entra ID using Microsoft Entra Connect Sync.
 
-	New-ItemProperty -path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' -name 'SystemDefaultTlsVersions' -value '1' -PropertyType 'DWord' -Force | Out-Null
+I prepared the Windows Server for secure communication, installed Microsoft Entra Connect, configured Password Hash Synchronization using Express Settings, connected the on-premises AD DS forest to the Microsoft Entra tenant, initiated the first synchronization cycle, and verified that the directory users appeared in Microsoft Entra ID.
 
-	New-ItemProperty -path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
+This project demonstrates practical experience with hybrid identity, directory synchronization, administrative authentication, User Principal Name planning, and synchronization validation.
 
-	New-Item 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' -Force | Out-Null
+## Business Scenario
 
-	New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' -name 'SystemDefaultTlsVersions' -value '1' -PropertyType 'DWord' -Force | Out-Null
+An organization manages employee accounts in an on-premises Active Directory domain but also needs those identities available in Microsoft cloud services.
 
-	New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
+Creating separate cloud accounts would increase administrative work and could lead to inconsistent identities. Microsoft Entra Connect Sync provides a centralized approach by synchronizing identity information from AD DS to Microsoft Entra ID.
 
-	New-Item 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -Force | Out-Null
-	
-	New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -name 'Enabled' -value '1' -PropertyType 'DWord' -Force | Out-Null
-	
-	New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -name 'DisabledByDefault' -value 0 -PropertyType 'DWord' -Force | Out-Null
-	
-	New-Item 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' -Force | Out-Null
-	
-	New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' -name 'Enabled' -value '1' -PropertyType 'DWord' -Force | Out-Null
-	
-	New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' -name 'DisabledByDefault' -value 0 -PropertyType 'DWord' -Force | Out-Null
-	Write-Host 'TLS 1.2 has been enabled.'
- 
-  <p align="center"><img src="https://i.imgur.com/027NXZ7.png" height="50%" width="50%" alt="image"/>
-  <p align="center"><img src="https://i.imgur.com/f47UxJm.png" height="50%" width="50%" alt="image"/>
+## Architecture
 
-  <p>2. After the TLS(Transport Layer Security) is enabled, Go to Azure portal on your browser, search for Microsoft Entra connect. </p>
-  <p align="center"><img src="https://i.imgur.com/rQlvqCg.png" height="50%" width="50%" alt="image"/>
+`On-Premises AD DS → Microsoft Entra Connect Sync → Microsoft Entra ID`
 
-  <p>3. From the Microsoft Entra Connect, go to Connect Sync, from the connect sync, click on Download Microsoft Entra Connect.</p>
-  <p align="center"><img src="https://i.imgur.com/Zdb7GkU.png" height="50%" width="50%" alt="image"/>
+Microsoft Entra Connect acts as the synchronization bridge between the local Active Directory forest and the cloud tenant.
 
-  <p>4. After the download is done, go to where the file is downloaded and double click to start the installation.</p>
-  <p align="center"><img src="https://i.imgur.com/mOtnUIo.png" height="50%" width="50%" alt="image"/>
+## Project Objectives
 
-  <p>5. After the installation is finished, click on FINISH.</p>
-  <p align="center"><img src="https://i.imgur.com/7exsTVT.png" height="50%" width="50%" alt="image"/>
-  <p align="center"><img src="https://i.imgur.com/iKxXRXk.png" height="50%" width="50%" alt="image"/>
+- Prepare the synchronization server for TLS 1.2 communication.
+- Download and install Microsoft Entra Connect Sync.
+- Connect Microsoft Entra ID and the on-premises AD DS forest.
+- Configure Password Hash Synchronization.
+- Review the relationship between on-premises UPN suffixes and verified cloud domains.
+- Start the initial directory synchronization.
+- Verify synchronized user objects in Microsoft Entra ID.
+- Document installation and identity-design considerations.
 
-  <p>6. After the installation, open the Azure AD connect application. Agree to the license terms and privacy notice and click Continue</p>
-  <p align="center"><img src="https://i.imgur.com/8LvwK79.png" height="50%" width="50%" alt="image"/>
+## Lab Environment
 
-  <p>7. On the next screen, click on “Use express settings”.</p>
-  <p align="center"><img src="https://i.imgur.com/X4tMV6K.png" height="50%" width="50%" alt="image"/>
+| Component | Technology |
+| --- | --- |
+| On-premises directory | Active Directory Domain Services |
+| On-premises forest | `adeniyi.com` |
+| Cloud directory | Microsoft Entra ID |
+| Synchronization tool | Microsoft Entra Connect Sync |
+| Sign-in method | Password Hash Synchronization |
+| Installation type | Express Settings |
+| Server administration | Windows PowerShell |
+| Cloud administration | Microsoft Entra admin center |
 
-  <p>8. Then input your Azure credentials(make sure its an Global administrator account) and password, then click NEXT.</p>
-  <p align="center"><img src="https://i.imgur.com/vOC6eUZ.png" height="50%" width="50%" alt="image"/>
+## Skills Demonstrated
 
-  <p>9. Next, put in your  On-premises Active Directory credentials(An Administrator account and Password).</p>
-  <p align="center"><img src="https://i.imgur.com/m5XSP0T.png" height="50%" width="50%" alt="image"/>
+- Hybrid identity implementation
+- Microsoft Entra Connect installation
+- Active Directory and Entra ID integration
+- Password Hash Synchronization
+- TLS 1.2 and Windows registry configuration
+- PowerShell administration
+- Identity and access administration
+- UPN suffix and verified-domain planning
+- Synchronization troubleshooting
+- Cloud-directory validation
 
-  <p>10. On the “Azure Sign-in configuration screen”, click NEXT</p>
-  <p align="center"><img src="https://i.imgur.com/je4HWdw.png" height="50%" width="50%" alt="image"/>
+## Implementation
 
-  <p>11. On the “Ready to configure screen”, click on INSTALL. Then you are greeted with the Configuring screen. This may take a while, just wait for it to finish.</p>
-  <p align="center"><img src="https://i.imgur.com/0VqB08t.png" height="50%" width="50%" alt="image"/>
+### 1. Prepared the Synchronization Server
 
-  <p>12. After the configuration is done, you will see a “Configuration Complete” message, click EXIT.</p>
-  <p align="center"><img src="https://i.imgur.com/Whfa4uw.png" height="50%" width="50%" alt="image"/>
+I opened Windows PowerShell as an administrator on the Windows Server that would host Microsoft Entra Connect Sync.
 
-  <p>13. To confirm that the Sync is complete, go back to your Azure portal and go to Microsoft Entra ID, then Users, you will see the On Premises users have been added to your Microsoft Entra ID users.</p>
-  <p align="center"><img src="https://i.imgur.com/XV3Ixdy.png" height="50%" width="50%" alt="image"/>
+<p align="center">
+  <img src="https://i.imgur.com/027NXZ7.png" width="700" alt="Opening Windows PowerShell as an administrator on the synchronization server">
+</p>
 
-  <br>
+I then configured the required .NET Framework and SCHANNEL registry settings for TLS 1.2.
+
+```powershell
+# Configure .NET Framework to use system-default TLS versions and strong cryptography.
+
+New-Item 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' `
+    -Force | Out-Null
+
+New-ItemProperty `
+    -Path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' `
+    -Name 'SystemDefaultTlsVersions' `
+    -Value 1 `
+    -PropertyType DWord `
+    -Force | Out-Null
+
+New-ItemProperty `
+    -Path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' `
+    -Name 'SchUseStrongCrypto' `
+    -Value 1 `
+    -PropertyType DWord `
+    -Force | Out-Null
+
+New-Item 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' `
+    -Force | Out-Null
+
+New-ItemProperty `
+    -Path 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' `
+    -Name 'SystemDefaultTlsVersions' `
+    -Value 1 `
+    -PropertyType DWord `
+    -Force | Out-Null
+
+New-ItemProperty `
+    -Path 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' `
+    -Name 'SchUseStrongCrypto' `
+    -Value 1 `
+    -PropertyType DWord `
+    -Force | Out-Null
+
+# Enable TLS 1.2 for SCHANNEL server communication.
+
+New-Item `
+    'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' `
+    -Force | Out-Null
+
+New-ItemProperty `
+    -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' `
+    -Name 'Enabled' `
+    -Value 1 `
+    -PropertyType DWord `
+    -Force | Out-Null
+
+New-ItemProperty `
+    -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' `
+    -Name 'DisabledByDefault' `
+    -Value 0 `
+    -PropertyType DWord `
+    -Force | Out-Null
+
+# Enable TLS 1.2 for SCHANNEL client communication.
+
+New-Item `
+    'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' `
+    -Force | Out-Null
+
+New-ItemProperty `
+    -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' `
+    -Name 'Enabled' `
+    -Value 1 `
+    -PropertyType DWord `
+    -Force | Out-Null
+
+New-ItemProperty `
+    -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' `
+    -Name 'DisabledByDefault' `
+    -Value 0 `
+    -PropertyType DWord `
+    -Force | Out-Null
+
+Write-Host 'TLS 1.2 has been enabled.'
+```
+
+
+I confirmed that the script completed and displayed the TLS 1.2 success message.
+
+<p align="center">
+  <img src="https://i.imgur.com/f47UxJm.png" width="700" alt="PowerShell output confirming that TLS 1.2 was enabled">
+</p>
+
+
+
+### 2. Downloaded Microsoft Entra Connect Sync
+
+From the Microsoft Entra admin center, I opened **Microsoft Entra Connect** and selected **Connect Sync**.
+
+<p align="center">
+  <img src="https://i.imgur.com/rQlvqCg.png" width="700" alt="Opening Microsoft Entra Connect from the Microsoft Entra admin center">
+</p>
+
+I selected **Download Microsoft Entra Connect** and saved the installation package to the Windows Server.
+
+<p align="center">
+  <img src="https://i.imgur.com/Zdb7GkU.png" width="700" alt="Downloading Microsoft Entra Connect Sync from the Connect Sync page">
+</p>
+
+### 3. Installed Microsoft Entra Connect
+
+I located the downloaded `AzureADConnect` installer and launched it with administrative privileges.
+
+<p align="center">
+  <img src="https://i.imgur.com/mOtnUIo.png" width="700" alt="Microsoft Entra Connect installation package on the Windows Server">
+</p>
+
+The setup wizard copied the required Microsoft Entra Connect files to the server.
+
+<p align="center">
+  <img src="https://i.imgur.com/7exsTVT.png" width="700" alt="Microsoft Entra Connect installation in progress">
+</p>
+
+#### Installation Troubleshooting
+
+An initial setup attempt displayed a message stating that the installation had been interrupted.
+
+<p align="center">
+  <img src="https://i.imgur.com/iKxXRXk.png" width="700" alt="Initial Microsoft Entra Connect setup interruption">
+</p>
+
+I did not treat the interrupted wizard as a successful installation. After checking the server prerequisites and rerunning the setup, I confirmed that Microsoft Entra Connect opened successfully and continued with the configuration.
+
+### 4. Selected Express Settings
+
+I opened Microsoft Entra Connect, accepted the license terms and privacy notice, and continued to the configuration wizard.
+
+<p align="center">
+  <img src="https://i.imgur.com/8LvwK79.png" width="700" alt="Accepting the Microsoft Entra Connect license terms">
+</p>
+
+Because this was a single-forest lab environment, I selected **Use express settings**.
+
+<p align="center">
+  <img src="https://i.imgur.com/X4tMV6K.png" width="700" alt="Selecting Express Settings in Microsoft Entra Connect">
+</p>
+
+Express Settings configured:
+
+- Synchronization for the current AD DS forest
+- Password Hash Synchronization
+- Initial synchronization
+- Synchronization of supported identity attributes
+- Automatic upgrade
+
+### 5. Connected Microsoft Entra ID
+
+On the **Connect to Microsoft Entra ID** page, I entered the credentials for an account with the required hybrid identity administration permissions.
+
+<p align="center">
+  <img src="https://i.imgur.com/vOC6eUZ.png" width="700" alt="Connecting Microsoft Entra Connect to Microsoft Entra ID">
+</p>
+
+### 6. Connected Active Directory Domain Services
+
+On the **Connect to AD DS** page, I entered the credentials for an account with Enterprise Administrator permissions in the on-premises forest.
+
+<p align="center">
+  <img src="https://i.imgur.com/m5XSP0T.png" width="700" alt="Connecting Microsoft Entra Connect to Active Directory Domain Services">
+</p>
+
+This allowed Microsoft Entra Connect to read the on-premises directory and configure the required synchronization components.
+
+### 7. Reviewed the UPN Suffix Configuration
+
+The Microsoft Entra sign-in configuration page showed that the on-premises UPN suffix `adeniyi.com` had not been added as a verified custom domain in Microsoft Entra ID.
+
+<p align="center">
+  <img src="https://i.imgur.com/je4HWdw.png" width="700" alt="Microsoft Entra sign-in configuration showing an unmatched UPN suffix">
+</p>
+
+For this lab, I continued without matching every UPN suffix to a verified domain. This allowed the directory objects to synchronize, but Microsoft Entra ID used the tenant’s default `onmicrosoft.com` suffix for the affected cloud UPNs.
+
+
+### 8. Started the Initial Synchronization
+
+On the **Ready to configure** page, I reviewed the selected configuration and left **Start the synchronization process when configuration completes** enabled.
+
+<p align="center">
+  <img src="https://i.imgur.com/0VqB08t.png" width="700" alt="Microsoft Entra Connect ready-to-configure page">
+</p>
+
+I selected **Install**, which:
+
+- Installed the synchronization engine
+- Configured the Microsoft Entra connector
+- Configured the AD DS connector
+- Enabled Password Hash Synchronization
+- Enabled automatic upgrade
+- Started the initial synchronization cycle
+
+### 9. Confirmed Configuration Completion
+
+The wizard displayed **Configuration complete**, confirming that Microsoft Entra Connect had been configured and the synchronization process had been initiated.
+
+<p align="center">
+  <img src="https://i.imgur.com/Whfa4uw.png" width="700" alt="Microsoft Entra Connect configuration-complete page">
+</p>
+
+The completion screen also identified that Active Directory Recycle Bin was not enabled in the lab forest.
+
+
+### 10. Verified Synchronized Users
+
+In the Microsoft Entra admin center, I opened **Microsoft Entra ID > Users** and confirmed that the on-premises directory users appeared in the cloud tenant.
+
+<p align="center">
+  <img src="https://i.imgur.com/XV3Ixdy.png" width="700" alt="Synchronized Active Directory users displayed in Microsoft Entra ID">
+</p>
+
+The **On-premises sync enabled** value confirmed that the highlighted accounts originated from the local Active Directory environment.
+
+## Validation Results
+
+I confirmed that:
+
+- TLS 1.2 was enabled on the synchronization server.
+- Microsoft Entra Connect was installed and configured.
+- The Entra tenant connection completed successfully.
+- The on-premises AD DS forest connection completed successfully.
+- Password Hash Synchronization was enabled.
+- The initial synchronization cycle was started.
+- On-premises user objects appeared in Microsoft Entra ID.
+- Synchronized users were identified as originating from on-premises AD DS.
+- The unmatched UPN-suffix warning was reviewed and documented.
+
+## Troubleshooting Reference
+
+| Issue | Recommended check |
+| --- | --- |
+| Setup wizard is interrupted | Confirm TLS 1.2, server prerequisites, local administrator access, and network connectivity before rerunning the installer |
+| Cloud authentication fails | Confirm the Microsoft Entra account has the required hybrid identity administration permissions |
+| AD DS authentication fails | Confirm the account has Enterprise Administrator permissions and the domain name is entered correctly |
+| UPN suffix displays `Not Added` | Add and verify the corresponding custom domain in Microsoft Entra ID or update the on-premises UPN suffix |
+| Users do not appear in Entra ID | Check the synchronization service, directory scope, connector status, and network connectivity |
+| Users synchronize but cannot sign in | Review the cloud UPN, verified-domain status, and Password Hash Synchronization status |
+
+## Security and Design Considerations
+
+- Use dedicated administrative accounts for hybrid identity configuration.
+- Apply least-privilege access after the initial deployment.
+- Never document or expose administrative passwords.
+- Redact production tenant IDs and privileged usernames from public screenshots.
+- Verify production UPN suffixes before synchronizing users.
+- Enable Active Directory Recycle Bin to improve object recovery.
+- Monitor synchronization health and investigate recurring errors.
+
+## Key Takeaways
+
+This project strengthened my understanding of how on-premises identities are extended into Microsoft Entra ID.
+
+Successful hybrid identity configuration depends on more than installing the synchronization tool. The server must meet security prerequisites, both directories must be authenticated correctly, the sign-in domain must be planned, and the synchronized objects must be validated in the cloud tenant.
+
+The project also demonstrated the importance of distinguishing between successful object synchronization and a complete sign-in experience. Directory objects can synchronize even when the on-premises UPN suffix is not verified, but users may receive a different cloud UPN until the custom domain is added and verified.
+
+
+## Related Projects
+
+- [Active Directory Implementation](https://github.com/AdeniyiAdesakin/Active-Directory-Implementation)
+- [Active Directory Domain Services and Windows Client Integration](https://github.com/AdeniyiAdesakin/Install-Active-Directory-Domain-Services-and-Join-Client-s-Computer-to-Active-Directory)
 
