@@ -1,4 +1,4 @@
-# Microsoft Entra Connect Sync: Hybrid Identity Integration
+# Microsoft Entra ID and On-Premises Active Directory Synchronization
 
 **Microsoft Entra ID | Active Directory Domain Services | Password Hash Synchronization | PowerShell**
 
@@ -311,16 +311,6 @@ I confirmed that:
 | UPN suffix displays `Not Added` | Add and verify the corresponding custom domain in Microsoft Entra ID or update the on-premises UPN suffix |
 | Users do not appear in Entra ID | Check the synchronization service, directory scope, connector status, and network connectivity |
 | Users synchronize but cannot sign in | Review the cloud UPN, verified-domain status, and Password Hash Synchronization status |
-
-## Security and Design Considerations
-
-- Use dedicated administrative accounts for hybrid identity configuration.
-- Apply least-privilege access after the initial deployment.
-- Never document or expose administrative passwords.
-- Redact production tenant IDs and privileged usernames from public screenshots.
-- Verify production UPN suffixes before synchronizing users.
-- Enable Active Directory Recycle Bin to improve object recovery.
-- Monitor synchronization health and investigate recurring errors.
 
 ## Key Takeaways
 
