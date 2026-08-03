@@ -66,87 +66,37 @@ Microsoft Entra Connect acts as the synchronization bridge between the local Act
 I opened Windows PowerShell as an administrator on the Windows Server that would host Microsoft Entra Connect Sync.
 
 <p align="center">
-  <img src="https://i.imgur.com/027NXZ7.png" width="700" alt="Opening Windows PowerShell as an administrator on the synchronization server">
+  <img src="https://i.imgur.com/s7SsVsp.png" width="700" alt="Opening Windows PowerShell as an administrator on the synchronization server">
 </p>
 
 I then configured the required .NET Framework and SCHANNEL registry settings for TLS 1.2.
 
 ```powershell
-# Configure .NET Framework to use system-default TLS versions and strong cryptography.
+# TLS 1.2 Registry Key
 
-New-Item 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' `
-    -Force | Out-Null
+New-Item 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' -Force | Out-Null
 
-New-ItemProperty `
-    -Path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' `
-    -Name 'SystemDefaultTlsVersions' `
-    -Value 1 `
-    -PropertyType DWord `
-    -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' -name 'SystemDefaultTlsVersions' -value '1' -PropertyType 'DWord' -Force | Out-Null
 
-New-ItemProperty `
-    -Path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' `
-    -Name 'SchUseStrongCrypto' `
-    -Value 1 `
-    -PropertyType DWord `
-    -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\.NETFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
 
-New-Item 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' `
-    -Force | Out-Null
+New-Item 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' -Force | Out-Null
 
-New-ItemProperty `
-    -Path 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' `
-    -Name 'SystemDefaultTlsVersions' `
-    -Value 1 `
-    -PropertyType DWord `
-    -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' -name 'SystemDefaultTlsVersions' -value '1' -PropertyType 'DWord' -Force | Out-Null
 
-New-ItemProperty `
-    -Path 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' `
-    -Name 'SchUseStrongCrypto' `
-    -Value 1 `
-    -PropertyType DWord `
-    -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
 
-# Enable TLS 1.2 for SCHANNEL server communication.
+New-Item 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -Force | Out-Null
 
-New-Item `
-    'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' `
-    -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -name 'Enabled' -value '1' -PropertyType 'DWord' -Force | Out-Null
 
-New-ItemProperty `
-    -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' `
-    -Name 'Enabled' `
-    -Value 1 `
-    -PropertyType DWord `
-    -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -name 'DisabledByDefault' -value 0 -PropertyType 'DWord' -Force | Out-Null
 
-New-ItemProperty `
-    -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' `
-    -Name 'DisabledByDefault' `
-    -Value 0 `
-    -PropertyType DWord `
-    -Force | Out-Null
+New-Item 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' -Force | Out-Null
 
-# Enable TLS 1.2 for SCHANNEL client communication.
+New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' -name 'Enabled' -value '1' -PropertyType 'DWord' -Force | Out-Null
 
-New-Item `
-    'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' `
-    -Force | Out-Null
-
-New-ItemProperty `
-    -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' `
-    -Name 'Enabled' `
-    -Value 1 `
-    -PropertyType DWord `
-    -Force | Out-Null
-
-New-ItemProperty `
-    -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' `
-    -Name 'DisabledByDefault' `
-    -Value 0 `
-    -PropertyType DWord `
-    -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client' -name 'DisabledByDefault' -value 0 -PropertyType 'DWord' -Force | Out-Null
 
 Write-Host 'TLS 1.2 has been enabled.'
 ```
@@ -155,7 +105,7 @@ Write-Host 'TLS 1.2 has been enabled.'
 I confirmed that the script completed and displayed the TLS 1.2 success message.
 
 <p align="center">
-  <img src="https://i.imgur.com/f47UxJm.png" width="700" alt="PowerShell output confirming that TLS 1.2 was enabled">
+  <img src="https://i.imgur.com/nbr63c5.png" width="700" alt="PowerShell output confirming that TLS 1.2 was enabled">
 </p>
 
 
@@ -165,13 +115,13 @@ I confirmed that the script completed and displayed the TLS 1.2 success message.
 From the Microsoft Entra admin center, I opened **Microsoft Entra Connect** and selected **Connect Sync**.
 
 <p align="center">
-  <img src="https://i.imgur.com/rQlvqCg.png" width="700" alt="Opening Microsoft Entra Connect from the Microsoft Entra admin center">
+  <img src="https://i.imgur.com/tWWoY8s.png" width="700" alt="Opening Microsoft Entra Connect from the Microsoft Entra admin center">
 </p>
 
 I selected **Download Microsoft Entra Connect** and saved the installation package to the Windows Server.
 
 <p align="center">
-  <img src="https://i.imgur.com/Zdb7GkU.png" width="700" alt="Downloading Microsoft Entra Connect Sync from the Connect Sync page">
+  <img src="https://i.imgur.com/0tu6Muj.png" width="700" alt="Downloading Microsoft Entra Connect Sync from the Connect Sync page">
 </p>
 
 ### 3. Installed Microsoft Entra Connect
@@ -179,13 +129,13 @@ I selected **Download Microsoft Entra Connect** and saved the installation packa
 I located the downloaded `AzureADConnect` installer and launched it with administrative privileges.
 
 <p align="center">
-  <img src="https://i.imgur.com/mOtnUIo.png" width="700" alt="Microsoft Entra Connect installation package on the Windows Server">
+  <img src="https://i.imgur.com/9OuWQsC.png" width="700" alt="Microsoft Entra Connect installation package on the Windows Server">
 </p>
 
 The setup wizard copied the required Microsoft Entra Connect files to the server.
 
 <p align="center">
-  <img src="https://i.imgur.com/7exsTVT.png" width="700" alt="Microsoft Entra Connect installation in progress">
+  <img src="https://i.imgur.com/cnX0rde.png" width="700" alt="Microsoft Entra Connect installation in progress">
 </p>
 
 #### Installation Troubleshooting
@@ -193,7 +143,7 @@ The setup wizard copied the required Microsoft Entra Connect files to the server
 An initial setup attempt displayed a message stating that the installation had been interrupted.
 
 <p align="center">
-  <img src="https://i.imgur.com/iKxXRXk.png" width="700" alt="Initial Microsoft Entra Connect setup interruption">
+  <img src="https://i.imgur.com/XKNneoA.png" width="700" alt="Initial Microsoft Entra Connect setup interruption">
 </p>
 
 I did not treat the interrupted wizard as a successful installation. After checking the server prerequisites and rerunning the setup, I confirmed that Microsoft Entra Connect opened successfully and continued with the configuration.
@@ -203,13 +153,13 @@ I did not treat the interrupted wizard as a successful installation. After check
 I opened Microsoft Entra Connect, accepted the license terms and privacy notice, and continued to the configuration wizard.
 
 <p align="center">
-  <img src="https://i.imgur.com/8LvwK79.png" width="700" alt="Accepting the Microsoft Entra Connect license terms">
+  <img src="https://i.imgur.com/2l0mpG4.png" width="700" alt="Accepting the Microsoft Entra Connect license terms">
 </p>
 
 Because this was a single-forest lab environment, I selected **Use express settings**.
 
 <p align="center">
-  <img src="https://i.imgur.com/X4tMV6K.png" width="700" alt="Selecting Express Settings in Microsoft Entra Connect">
+  <img src="https://i.imgur.com/gin1nDO.png" width="700" alt="Selecting Express Settings in Microsoft Entra Connect">
 </p>
 
 Express Settings configured:
@@ -225,7 +175,7 @@ Express Settings configured:
 On the **Connect to Microsoft Entra ID** page, I entered the credentials for an account with the required hybrid identity administration permissions.
 
 <p align="center">
-  <img src="https://i.imgur.com/vOC6eUZ.png" width="700" alt="Connecting Microsoft Entra Connect to Microsoft Entra ID">
+  <img src="https://i.imgur.com/5myYPYL.png" width="700" alt="Connecting Microsoft Entra Connect to Microsoft Entra ID">
 </p>
 
 ### 6. Connected Active Directory Domain Services
@@ -233,7 +183,7 @@ On the **Connect to Microsoft Entra ID** page, I entered the credentials for an 
 On the **Connect to AD DS** page, I entered the credentials for an account with Enterprise Administrator permissions in the on-premises forest.
 
 <p align="center">
-  <img src="https://i.imgur.com/m5XSP0T.png" width="700" alt="Connecting Microsoft Entra Connect to Active Directory Domain Services">
+  <img src="https://i.imgur.com/DqnEFzf.png" width="700" alt="Connecting Microsoft Entra Connect to Active Directory Domain Services">
 </p>
 
 This allowed Microsoft Entra Connect to read the on-premises directory and configure the required synchronization components.
@@ -243,7 +193,7 @@ This allowed Microsoft Entra Connect to read the on-premises directory and confi
 The Microsoft Entra sign-in configuration page showed that the on-premises UPN suffix `adeniyi.com` had not been added as a verified custom domain in Microsoft Entra ID.
 
 <p align="center">
-  <img src="https://i.imgur.com/je4HWdw.png" width="700" alt="Microsoft Entra sign-in configuration showing an unmatched UPN suffix">
+  <img src="https://i.imgur.com/WwcyTpt.png" width="700" alt="Microsoft Entra sign-in configuration showing an unmatched UPN suffix">
 </p>
 
 For this lab, I continued without matching every UPN suffix to a verified domain. This allowed the directory objects to synchronize, but Microsoft Entra ID used the tenant’s default `onmicrosoft.com` suffix for the affected cloud UPNs.
@@ -254,7 +204,7 @@ For this lab, I continued without matching every UPN suffix to a verified domain
 On the **Ready to configure** page, I reviewed the selected configuration and left **Start the synchronization process when configuration completes** enabled.
 
 <p align="center">
-  <img src="https://i.imgur.com/0VqB08t.png" width="700" alt="Microsoft Entra Connect ready-to-configure page">
+  <img src="https://i.imgur.com/JWn6QYE.png" width="700" alt="Microsoft Entra Connect ready-to-configure page">
 </p>
 
 I selected **Install**, which:
@@ -271,7 +221,7 @@ I selected **Install**, which:
 The wizard displayed **Configuration complete**, confirming that Microsoft Entra Connect had been configured and the synchronization process had been initiated.
 
 <p align="center">
-  <img src="https://i.imgur.com/Whfa4uw.png" width="700" alt="Microsoft Entra Connect configuration-complete page">
+  <img src="https://i.imgur.com/rISwTyF.png" width="700" alt="Microsoft Entra Connect configuration-complete page">
 </p>
 
 The completion screen also identified that Active Directory Recycle Bin was not enabled in the lab forest.
@@ -282,7 +232,7 @@ The completion screen also identified that Active Directory Recycle Bin was not 
 In the Microsoft Entra admin center, I opened **Microsoft Entra ID > Users** and confirmed that the on-premises directory users appeared in the cloud tenant.
 
 <p align="center">
-  <img src="https://i.imgur.com/XV3Ixdy.png" width="700" alt="Synchronized Active Directory users displayed in Microsoft Entra ID">
+  <img src="https://i.imgur.com/MSWBAWQ.png" width="700" alt="Synchronized Active Directory users displayed in Microsoft Entra ID">
 </p>
 
 The **On-premises sync enabled** value confirmed that the highlighted accounts originated from the local Active Directory environment.
