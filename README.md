@@ -10,7 +10,7 @@ I prepared the Windows Server for secure communication, installed Microsoft Entr
 
 This project demonstrates practical experience with hybrid identity, directory synchronization, administrative authentication, User Principal Name planning, and synchronization validation.
 
-## Business Scenario
+## Simulated Business Scenario
 
 An organization manages employee accounts in an on-premises Active Directory domain but also needs those identities available in Microsoft cloud services.
 
